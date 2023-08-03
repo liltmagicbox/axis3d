@@ -1,4 +1,4 @@
-from math import cos,sin, pi
+from math import cos,sin, pi, asin
 
 
 """
@@ -19,6 +19,11 @@ def plot3d(X,Y,Z):
 	import matplotlib.pyplot as plt
 	fig = plt.figure()#figsize=(4, 6))
 	ax = fig.add_subplot(111, projection='3d')
+	
+	#https://stackoverflow.com/questions/15858192/how-to-set-xlim-and-ylim-for-a-subplot
+	ax.set_xlim([-2, 2])
+	ax.set_ylim([-2, 2])
+	ax.set_zlim([-2, 2])
 	#===========
 	ax.plot(X,Y,Z, 'bo-')
 	plt.show()
@@ -61,7 +66,6 @@ def make_cylinder_points( radius=1, height=2, slices=8, stack=4 ):
 def make_cone_points( radius=1, height=2, slices=8, stack=4 , radius2 = 0 ):
 	"the top shall be a point, if radius2 < EPS."
 	points = []
-
 	d_radius = (radius-radius2)/stack
 	for i in range(stack+1):
 		i_radius = radius-d_radius*i
@@ -146,25 +150,88 @@ def make_cylinder( radius=1, height=2, slices=8, stack=4, radius2 = None):
 
 #==sphere
 
-def make_sphere_points(radius=1, slices=4, stack=4):
-	for i in range(stack):
-		ring = make_ring(slices,radius,z)
+def make_sphere_points(radius=1, slices=8, stack=4, height = None, hemi=False):
+	"58 points, 8* 7 +2"
+	if height is None:
+		height = radius
+
+	points = []
+	
+	#upper hemisphere
+	if hemi:
+		for i in range(stack):
+			z = i/stack
+			th = asin(z)
+			r = cos(th)*radius
+			hz = z * height
+			ring = make_ring(slices, r, hz)
+			points.extend(ring)
+		#===
+		points.append( (0,0,height))
+		points.append( (0,0,0))
+		return points
+
+	
+	#shall be bottom to top..
+	for i in range(stack+1):
+		z = (i/stack*2-1)
+		if i == 0 or i== stack:
+			continue
+		#print(z,i)
+
+		th = asin(z)
+		r = cos(th)*radius
+		hz = z * height
+		ring = make_ring(slices, r, hz)
+		points.extend(ring)	
+
+	points.append( (0,0,height))
+	points.append( (0,0,-height))
+	return points
 
 
-def make_ring(slices, radius, z):
-	"z up ring "
-	coords = []
-	d_angle = 2*pi/slices
+
+def make_sphere(radius=1, slices=8, stack=4, height=None, hemi=False):
+	points = make_sphere_points(radius, slices, stack, height , hemi)
+	begin = len(points)-1
+	end = len(points)-2
+
+	indices = []
+	#wall
+	for j in range(stack-2):
+		offset = slices * j
+		for i in range(slices):
+			#===normal wall
+			up = slices
+			tri = (offset+i, offset+(i+1)%slices , offset+(i+1)%slices+ up)
+			#print(tri,'tri',i)
+			indices.append(tri)
+			
+			#tri2
+			tri = (offset+i, offset+(i+1)%slices+ up,  offset+i+ up)
+			#print(tri,'tri',i)
+			indices.append(tri)
+
+	#===hat
+	offset = slices * (stack-2)
 	for i in range(slices):
-		#print(i, d_angle*i*180/pi )
-		th = d_angle*i
-		x = cos(th) * radius
-		y = sin(th) * radius
-		#z = altitude
-		coords.append( (x,y,z) )
-	return coords
+		tri = (offset+i, offset+(i+1)%slices ,end)
+		#print(tri,'tri',i)
+		indices.append(tri)
+	#===bot
+	offset = 0
+	for i in range(slices):
+		tri = (offset+i, offset+(i+1)%slices ,begin)
+		#print(tri,'tri',i)
+		indices.append(tri)
+
+	return points, indices
+	
 
 
+
+# def make_eilapse(radius=1, slices=8, stack=4, height = None, hemi=False):
+# 	points = make_sphere_points(radius, slices, stack, height , hemi)
 
 
 #========cube
@@ -368,6 +435,35 @@ def test_make_cube_points():
 _tests.append(test_make_cube_points)
 
 
+
+def test_make_sphere_points():
+	points = make_sphere_points(height=2)
+	
+	X = []
+	Y = []
+	Z = []
+	for xyz in points:
+		X.append(xyz[0])
+		Y.append(xyz[1])
+		Z.append(xyz[2])
+	plot3d(X,Y,Z)
+_tests.append(test_make_sphere_points)
+
+
+def test_make_sphere():
+	points,indices = make_sphere(slices=8, height=2, stack = 9, radius=3, hemi=True)
+	
+	X = []
+	Y = []
+	Z = []
+	for tri in indices:
+		for i in tri:
+			xyz = points[i]
+			X.append(xyz[0])
+			Y.append(xyz[1])
+			Z.append(xyz[2])
+	plot3d(X,Y,Z)
+_tests.append(test_make_sphere)
 
 
 def main():
