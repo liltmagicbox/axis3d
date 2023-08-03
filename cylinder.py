@@ -1,21 +1,19 @@
-from math import cos,sin, pi, degrees
+from math import cos,sin, pi
 
 
 """
-a cylinder
+a cylinder , and cone.
 is came form , radius, height, stack. slice->slices
 radius a,b, so it be cone.
 
+make_cylinder( radius2= 0)
+ to cone.
 """
 
 
-def plot3d(X,Y,Z):
-	import matplotlib.pyplot as plt
-	fig = plt.figure()#figsize=(4, 6))
-	ax = fig.add_subplot(111, projection='3d')
-	#===========
-	ax.plot(X,Y,Z, 'bo-')
-	plt.show()
+EPS = 0.0001 #1e-5
+
+
 
 
 #======================================
@@ -25,13 +23,16 @@ def make_ring(slices, radius, z):
 	coords = []
 	d_angle = 2*pi/slices
 	for i in range(slices):
-		#print(i, degrees(d_angle*i) )
+		#print(i, d_angle*i*180/pi )
 		th = d_angle*i
 		x = cos(th) * radius
 		y = sin(th) * radius
 		#z = altitude
 		coords.append( (x,y,z) )
 	return coords
+
+
+#===========================
 
 def make_cylinder_points( radius=1, height=2, slices=8, stack=4 ):
 	points = []
@@ -46,9 +47,35 @@ def make_cylinder_points( radius=1, height=2, slices=8, stack=4 ):
 	return points
 
 
-def make_cylinder( radius=1, height=2, slices=8, stack=4 ):
+
+def make_cone_points( radius=1, height=2, slices=8, stack=4 , radius2 = 0 ):
+	"the top shall be a point, if radius2 < EPS."
+	points = []
+
+	d_radius = (radius-radius2)/stack
+	for i in range(stack+1):
+		i_radius = radius-d_radius*i
+		if i_radius < EPS:
+			continue
+		
+		z =  i* height/stack
+		coords = make_ring(slices, i_radius, z)
+		points.extend(coords)
+	
+	points.append( (0,0,height))
+	points.append( (0,0,0))
+	return points
+
+#======================================
+
+
+def make_cylinder( radius=1, height=2, slices=8, stack=4, radius2 = None):
 	"returns points / indices"
-	points = make_cylinder_points(radius, height, slices, stack)
+	if radius2 is None:
+		radius2 = radius
+	is_cone = radius2 < EPS
+	
+	points = make_cone_points(radius, height, slices, stack, radius2)
 	begin = len(points)-1
 	end = len(points)-2
 
@@ -61,8 +88,17 @@ def make_cylinder( radius=1, height=2, slices=8, stack=4 ):
 
 	#wall
 	for j in range(stack):
-		offset = slices * j
+		offset = slices * j		
 		for i in range(slices):
+			#==for cone
+			if j == stack-1 and is_cone:#last upper
+				up = slices
+				tri = (offset+i, offset+(i+1)%slices , end)
+				#print(tri,'tri',i)
+				indices.append(tri)
+				continue
+
+			#===normal wall
 			up = slices
 			tri = (offset+i, offset+(i+1)%slices , offset+(i+1)%slices+ up)
 			#print(tri,'tri',i)
@@ -72,6 +108,10 @@ def make_cylinder( radius=1, height=2, slices=8, stack=4 ):
 			tri = (offset+i, offset+(i+1)%slices+ up,  offset+i+ up)
 			#print(tri,'tri',i)
 			indices.append(tri)
+
+
+	if is_cone:
+		return points, indices
 
 	#===hat
 	offset = slices * stack
@@ -84,8 +124,36 @@ def make_cylinder( radius=1, height=2, slices=8, stack=4 ):
 
 
 
+#================ cone
+
+
+
+
+# def make_cone( radius=1, height=2, slices=8, stack=4 ):
+# 	radius2 = 0
+# 	return make_cylinder( radius, height, slices, stack, radius2)
+
+
+
+
+
 #================== test
+def plot3d(X,Y,Z):
+	import matplotlib.pyplot as plt
+	fig = plt.figure()#figsize=(4, 6))
+	ax = fig.add_subplot(111, projection='3d')
+	#===========
+	ax.plot(X,Y,Z, 'bo-')
+	plt.show()
+
+
+
+
+
 _tests = []
+#=================================
+
+
 
 def test_make_ring():
 	"_make_ring 1st created."
@@ -128,6 +196,21 @@ _tests.append(test_make_cylinder_points)
 
 
 
+
+def test_make_cone_points():
+	points = make_cone_points(radius2 = 0.2, stack = 9)
+
+	X = [i[0] for i in points]
+	Y = [i[1] for i in points]
+	Z = [i[2] for i in points]
+
+	plot3d(X,Y,Z)
+_tests.append(test_make_cone_points)
+
+
+
+
+
 def test_make_cylinder():
 	points,indices = make_cylinder()
 	
@@ -142,6 +225,24 @@ def test_make_cylinder():
 			Z.append(xyz[2])
 	plot3d(X,Y,Z)
 _tests.append(test_make_cylinder)
+
+
+def test_make_cone():
+	points,indices = make_cylinder(radius2 = 0)
+	
+	X = []
+	Y = []
+	Z = []
+	for tri in indices:
+		for i in tri:
+			xyz = points[i]
+			X.append(xyz[0])
+			Y.append(xyz[1])
+			Z.append(xyz[2])
+	plot3d(X,Y,Z)
+_tests.append(test_make_cone)
+
+
 
 
 
