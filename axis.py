@@ -33,9 +33,22 @@ class Axis:
 		raise NotImplementedError
 	def __str__(self):
 		"print == str."
-		attrs = { k: (v.stop-v.start) for k,v in self.attrs.items()}
-		return f"{attrs}\n{self.array.shape},{self.array[:,0]}"
-		
+		lines = ['---array:']
+		for k,v in self.attrs.items():
+			fitarr = self.arrfit(self.array[v])
+			line = f" attr {k} :{v} \n{fitarr}"
+			lines.append(line)
+		lines.append('---array fin')
+		return '\n'.join(lines)
+	
+	@staticmethod
+	def arrfit(arr):
+		a = []
+		for j in arr:
+			line = [f"{i:.2f}" for i in j]
+			a.append(str(line))
+		return '\n'.join(a)
+
 	@property
 	def N(self):
 		N = self.array.shape[1]  # [0] is attrs, [1] is items len.
@@ -80,30 +93,55 @@ class Axis:
 				slicer = self.attrs[varname]
 				attr = self.array[slicer]
 				kwargs[varname] = attr
-			print('running', func)
-			for i in [ f"{k} : {v}"for k,v in kwargs.items()]:
-				print(i)
+			#print('running', func)
+			#for i in [ f"{k} : {v}"for k,v in kwargs.items()]:
+			#	print(i)
 			func(**kwargs)
 
 
 	#=====
-	def set(self, attr, value):
+	def set(self, attr, value, id_ids=None):
+		"set by id, note:ids list py iter, do for <5k. "
 		#test 3 lines:
 		#value = 3
 		#value = [1,2,3]
 		#value = [[1],[2],[3]]
+		#for only len==3.
+		if '.' in attr:
+			attr, note = attr.split('.')
+			slicer = self.attrs[attr]		
+			start = slicer.start
+			if note == 'x':
+				slicer = slice(start,start+1)
+			elif note == 'y':
+				slicer = slice(start+1,start+2)
+			elif note == 'z':
+				slicer = slice(start+2,start+3)
+		
+		else:
+			slicer = self.attrs[attr]
 
-		slicer = self.attrs[attr]
-		#we've done, great thing!
-		try:
-			self.array[slicer] = value
-		except ValueError:
-			self.array[slicer] = [ (i,) for i in value]
+		if id_ids is None:
+			try:
+				self.array[slicer] = value
+			except ValueError:
+				self.array[slicer] = [ (i,) for i in value]
+		else:
+			try:
+				self.array[slicer,id_ids] = value
+			except ValueError:
+				self.array[slicer,id_ids] = [ (i,) for i in value]
 
-	def get(self, attr):
+
+	def get(self, attr, id_ids=None):
 		"should be copy of the array.."
 		slicer = self.attrs[attr]
-		return self.array[slicer]
+		
+		if id_ids is None:
+			return self.array[slicer]
+		else:
+			return self.array[slicer,id_ids]
+
 
 
 
@@ -144,12 +182,19 @@ a.add_func(pos_update)
 
 #print(a.attrs)
 
-print(a)
 #a.set('acc',1)
 #a.set('acc.x',1)
-a.set('acc', (0.1, 9.8, 0.1) )
+#a.set('acc', (0.1, 9.8, 0.1) , [1,2,3,5] )
+#a.set('acc', (0.1, 9.8, 0.1) , slice(1,5) )
+#a.set('pos', np.random.rand(a.N))
+
+a.set('pos', np.random.rand(a.N*3).reshape(3,-1) )
+a.set('acc.y', np.random.rand(a.N) )
+
+#x = a.get('pos',slice(3,5))
+#print(x)
 a.update(0.1)
-#print(a.array)
+print(a)
 
 
 """remnant
