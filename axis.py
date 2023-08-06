@@ -10,14 +10,63 @@ def pos_update(pos:3,vel:3,acc:3, dt):
 	vel += acc*dt
 	pos += vel*dt
 
-
 def rpos_update(rpos:3,rvel:3,racc:3, dt):
 	"4 times < 10. not slice"
 	rvel += racc*dt
 	rpos += rvel*dt
 
-N = 10
+
+#...fianly too bad. we read code lines, yeah.
+#no. this is too bad.
+#this too complex. don't! func_name and dt delivered automatically using bool flag.
+#this is rather not complex, compared with screening.. 
+def somewhat_heavy(somewhat_heavy:1, rpos:3,rvel:3,racc:3, dt):
+	#case1 dt flag. somewhat_heavy*dt
+	#case 2, screening
+
+	N = somewhat_heavy.shape[1]
+	if (np.count_nonzero(somewhat_heavy) / N) <0.1: #or 5k?
+		screen = somewhat_heavy.astype('bool').flatten()
+		
+		#====below same structure, hand-copied.
+		rvel[:,screen] += racc[:,screen]*dt
+		rpos[:,screen] += rvel[:,screen]*dt
+		return
+	rvel += racc*dt
+	rpos += rvel*dt
+
+#print(dir(somewhat_heavy.__code__))
+#print(len(somewhat_heavy.__code__.co_code))
+
+def codelineslentest():
+	from time import perf_counter
+
+	t = perf_counter()
+	for i in range(100000):
+		1#len(somewhat_heavy.__code__.co_code)
+	print(perf_counter()-t)
+	exit()
+	#20 vs 34ms
+	#py iter 100k, 7ms.
+
+
+
+
+def somewhat_heavy(rpos:3,rvel:3,racc:3, dt):
+	print('inpyut', dt, racc)
+	rvel += racc*dt
+	rpos += rvel*dt
+	e=1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+	d=1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+	c=1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+	b=1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+	a=1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+print(len(somewhat_heavy.__code__.co_code))
+
+
+N = 12
 DTYPE = 'float32'
+HEAVYLINES = 47
 
 class Axis:
 	def __init__(self):
@@ -73,7 +122,10 @@ class Axis:
 	
 	def add_func(self, func):
 		"funcname becomes flag."
-		if not self.add_attr( func.__name__ , 1):
+		if self.add_attr( func.__name__ , 1):
+			slicer = self.attrs[func.__name__]
+			self.array[slicer] = 1
+		else:
 			return
 		#========
 		attr_dict = get_type_hints(func)  # (pos:3 , dt) => {pos:3}.
@@ -85,14 +137,85 @@ class Axis:
 	#===========================
 
 	def update(self,dt):
+		"no flag, no screening. just give them all attrs."
+		N = self.N
+		
 		for func in self.funcs:
+			func_name = func.__name__
+			var_names = tuple(get_type_hints(func))
+			#var_names = func.__code__.co_varnames
+
+			#flag - lets the func decide - set arg of funcname.  think about dt chaining..
+			#slicer = self.attrs[func_name]
+			#dt *= self.array[slicer] #0.8ms-2.5ms added. acceptable.
+			flag = self.array[self.attrs[func_name]]
+			if (len(func.__code__.co_code)>HEAVYLINES) and (np.count_nonzero(flag) / N) <0.5: #or 5k?
+				self.update_screen(func, var_names, dt, flag)
+			else:
+				self.update_all(func, var_names, dt)
+
+	def update_screen(self, func, var_names,dt, flag):
+		print('scceee')
+		screen = flag.astype('bool').flatten()
+
+		kwargs = {'dt':dt}
+		for var in var_names:
+			if var == 'dt':
+				continue
+			slicer = self.attrs[var]
+			attr = self.array[slicer,screen] #here copy happens..
+			#FAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFA
+			#FAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFA
+			#FAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFA
+			#FAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFA
+			#FAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFA
+			#FAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFAILFA
+			# copy, not += wortking. just func do what it want.
+			kwargs[var] = attr
+		func(**kwargs)
+
+	def update_all(self, func, var_names, dt):
+		kwargs = {'dt':dt}
+		for var in var_names:
+			if var == 'dt':
+				continue
+			slicer = self.attrs[var]
+			attr = self.array[slicer]
+			kwargs[var] = attr
+		func(**kwargs)
+
+
+			
+
+	def _badupdate(self,dt):
+		N = self.N
+		
+		for func in self.funcs:
+			func_name = func.__name__
+			slicer = self.attrs[func_name]
+			flag = self.array[slicer]
+			x  = np.count_nonzero(flag)
+			screening = x/N < 0.1
+
+
+			var_names = func.__code__.co_varnames
+		
+			#then, not write the result.
+			if not screening:
+				dt *= flag #0.8ms-2.5ms added. acceptable.
+
 			kwargs = {'dt':dt}
-			for varname in func.__code__.co_varnames:
-				if varname == 'dt':
+			for var in var_names:
+				if var == 'dt':
 					continue
-				slicer = self.attrs[varname]
-				attr = self.array[slicer]
-				kwargs[varname] = attr
+				slicer = self.attrs[var]
+				if screening:
+					flag = flag.astype('bool').flatten()
+					attr = self.array[slicer, flag]
+					print(attr,'att!!!!!!!!!!!!!!!!!!!r',var)
+				else:
+					attr = self.array[slicer]
+				kwargs[var] = attr
 			#print('running', func)
 			#for i in [ f"{k} : {v}"for k,v in kwargs.items()]:
 			#	print(i)
@@ -121,6 +244,7 @@ class Axis:
 		else:
 			slicer = self.attrs[attr]
 
+		#=====step 2
 		if id_ids is None:
 			try:
 				self.array[slicer] = value
@@ -179,7 +303,6 @@ a = Axis()
 print(a.N)
 
 a.add_func(pos_update)
-
 #print(a.attrs)
 
 #a.set('acc',1)
@@ -187,13 +310,20 @@ a.add_func(pos_update)
 #a.set('acc', (0.1, 9.8, 0.1) , [1,2,3,5] )
 #a.set('acc', (0.1, 9.8, 0.1) , slice(1,5) )
 #a.set('pos', np.random.rand(a.N))
+a.set('pos_update', np.random.rand(a.N)>0.9)
 
 a.set('pos', np.random.rand(a.N*3).reshape(3,-1) )
 a.set('acc.y', np.random.rand(a.N) )
 
 #x = a.get('pos',slice(3,5))
 #print(x)
+
+a.add_func(somewhat_heavy)
+a.set('somewhat_heavy', np.random.rand(a.N)>0.5 )
+a.set('racc.x', np.random.rand(a.N))
+
 a.update(0.1)
+
 print(a)
 
 
