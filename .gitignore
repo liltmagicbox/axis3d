@@ -16,3 +16,4 @@ nptester.py
 setgetattr.py
 table.py
 table_big.py
+__pycache__/axis.cpython-310.pyc
