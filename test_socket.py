@@ -76,8 +76,8 @@ def if4times():
         aa.append(i)
     print(time.perf_counter()-t)
 
-if4times()
-exit()
+#if4times()
+#exit()
 
 def get_conn():
     HOST = 'localhost' # Standard loopback interface address (localhost) 
@@ -109,8 +109,10 @@ def recv_forever(conn,addr, queue):
     li = None
     while True:
         try:
-            data = conn.recv(1024)  # blocking
-            li.append(data)            
+            data = conn.recv(4096)  # blocking
+            if data != END:
+                li.append(data)
+                continue
         except ConnectionResetError:  # client without close.
             break
         except TimeoutError:
