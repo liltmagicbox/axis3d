@@ -106,27 +106,27 @@ def accept_forever(server, queue):
 def recv_forever(conn,addr, queue):
     DATA = 'DATA'.encode()
     END = 'END'.encode()
-    li = []
-    state = 0
+    li = None
     while True:
         try:
             data = conn.recv(1024)  # blocking
+            li.append(data)            
         except ConnectionResetError:  # client without close.
             break
         except TimeoutError:
             break
+        except AttributeError:
+            pass
         if not data:  # client closed.
             break
         #print(data, type(data), data.decode() )  # bytes
         if data == DATA:
-            state = 1
-        elif data == END:
-            queue.put( (addr, 'data',  b''.join(li)) )
             li = []
-            state = 0
-        else:
-            if state:
-                li.append(data) #this adds 4 of if.
+        elif data == END:
+            if li is None:
+                continue
+            queue.put( (addr, 'data',  b''.join(li)) )
+            li = None
     #======================
     queue.put( (addr, 'disconnected') )
 
