@@ -91,20 +91,21 @@ def get_conn():
 
 
 
-def accept_forever(server, queue):
+def accept_forever(server, clients):
     while True:
         conn, addr = server.accept()  # blocking
         conn.settimeout(50)
 
         #print('Connected: ', addr)
-        queue.put( (addr, 'connected') )
-
-        t = threading.Thread(target = recv_forever, args = (conn,addr, queue) )
+        #queue.put( (addr, 'connected') )
+        queue = Queue()
+        clients[addr] = queue
+        t = threading.Thread(target = recv_forever, args = (conn,addr, clients) )
         t.start()
 
 
-def recv_forever(conn,addr, queue):
-    DATA = 'DATA'.encode()
+def recv_forever(conn,addr, clients):
+    START = 'START'.encode()
     END = 'END'.encode()
     li = None
     while True:
@@ -122,28 +123,74 @@ def recv_forever(conn,addr, queue):
         if not data:  # client closed.
             break
         #print(data, type(data), data.decode() )  # bytes
-        if data == DATA:
+        if data == START:
             li = []
         elif data == END:
             if li is None:
                 continue
-            queue.put( (addr, 'data',  b''.join(li)) )
+            #queue.put( (addr, 'data',  b''.join(li)) )
+            queue = clients.get(addr)
+            if queue is None:
+                break
+            queue.put( b''.join(li) )
             li = None
     #======================
-    queue.put( (addr, 'disconnected') )
+    clients.pop(addr)
+    #queue.put( (addr, 'disconnected') )
 
+#tcp guarantees that all bytes received will be identical and in the same order as those sent
 
+but = """
+(('127.0.0.1', 2546), b"('localhost', 65432)ENDSTART('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)ENDSTART('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)ENDSTART('localhost', 65432)ENDSTART('localhost', 65432)ENDSTART('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)ENDSTART('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)ENDSTART('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)")
+(('127.0.0.1', 2546), b"('localhost', 65432)")
+    for addr, queue in self.clients.items():
+RuntimeError: dictionary changed size during iteration
 
-def get_data(conn)->bytes:
-    li = []
+happended. since socket stacks at buffer..
+"""
+
+def new_recv_forever(conn,addr, clients):
     while True:
         try:
             data = conn.recv(1024)  # blocking
-            li.append(data)
-        except:
-            return b''
-        if data == END:
+            if not data:  # client closed.
+                break
+            args = data.decode().split(',')
+            key,length = args
+            data = (key,get_data(conn, length))            
+            
+            queue = clients.get(addr)
+            if queue is None:
+                break
+            queue.put( data  )
+
+        except ConnectionResetError:  # client without close.
             break
+        except TimeoutError:
+            break
+        except Exception as e:  # args got no ,
+            print(e)
+            break
+
+        #print(data, type(data), data.decode() )  # bytes
+    #======================
+    clients.pop(addr)
+
+
+def get_data(conn, length, size=4096)->bytes:
+    li = []
+    times, left = divmod(length, size)
+
+    for i in range(times):
+        li.append(conn.recv(size))
+    li.append(conn.recv(left))
+
     return b''.join(li)
 
 
@@ -168,21 +215,29 @@ class Server:
         #PORT = 65432 # Port to listen on (non-privileged ports are > 1023)
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind((host, port))
-        self.server.listen(5)#5 max??
+        self.server.listen(5)# connection waiting queue max 5.
 
-        self.queue = Queue()
+        self.clients = {}
+        #self.queue = Queue()
+
+        self.addr = (host,port)
 
     def run(self):
-        t = threading.Thread(target = accept_forever, args = (self.server, self.queue) )
+        t = threading.Thread(target = accept_forever, args = (self.server, self.clients) )
         t.start()
+    def get(self):
+        #for key in tuple(self.clients):
+        #    queue = self.clients.get(key)
+        for addr, queue in self.clients.items():
+            while not queue.empty():
+                yield addr, queue.get_nowait()
 
     def look(self):
         while True:
-            print('tick')
+            print(self.addr, self.clients.keys())
             time.sleep(1)
-            while not self.queue.empty():
-                print(self.queue.get_nowait())
-
+            for i in self.get():
+                print(i)
 
 def main():
     s = Server()
