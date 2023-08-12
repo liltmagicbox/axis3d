@@ -163,14 +163,16 @@ def recv_forever(conn,addr, clients):
                 break
             #args = data.decode().split(',')
             length = int(data[:8].decode())
-            key = data[8:16].decode().strip()
-            args = data[16:].decode().split(',')
-            data = ( key, get_data(conn,length) )
+            
+            #key = data[8:16].decode().strip()
+            #args = data[16:].decode().split(',')
+            args = data[8:].decode().strip().split(',')
+            data = get_data(conn,length)
             
             queue = clients.get(addr)
             if queue is None:
                 break
-            queue.put( data  )
+            queue.put( (args,data)  )
 
         except ConnectionResetError:  # client without close.
             break
@@ -183,6 +185,7 @@ def recv_forever(conn,addr, clients):
         #print(data, type(data), data.decode() )  # bytes
     #print('server closed,',addr)
     #======================
+    conn.close()
     clients.pop(addr)
 
 
@@ -222,10 +225,17 @@ scn = """
 """
 
 class Server:
-    def __init__(self, host = 'localhost', port=65432):
+    def __init__(self, port=65432, localhost = True, udp=False):
         #HOST = 'localhost' # Standard loopback interface address (localhost) 
         #PORT = 65432 # Port to listen on (non-privileged ports are > 1023)
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if udp:
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        else:
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if localhost:
+            host = 'localhost'
+        else:
+            host = socket.gethostbyname(socket.gethostname())
         self.server.bind( (host, port))  #NOTE: localhost still fastest for internal.
         #self.server.bind((socket.gethostname(), port))  #NOTE: localhost still fastest for internal.
         self.server.listen(5)# connection waiting queue max 5.
@@ -243,14 +253,17 @@ class Server:
         for addr in tuple(self.clients):
             queue = self.clients.get(addr, Queue())
             while not queue.empty():
-                yield addr, queue.get_nowait()
+                yield queue.get_nowait()
+                #yield addr, queue.get_nowait()
 
     def look(self):
         while True:
             print(self.addr, self.clients.keys())
             time.sleep(1)
             for i in self.get():
-                print(len(i))
+                #addr, arg+data
+                #print(i[0], i[1][0] , len(i[1][1]) )
+                print(i)
 
 def main():
     s = Server()
