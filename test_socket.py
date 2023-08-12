@@ -104,7 +104,7 @@ def accept_forever(server, clients):
         t.start()
 
 
-def recv_forever(conn,addr, clients):
+def bad_recv_forever(conn,addr, clients):
     START = 'START'.encode()
     END = 'END'.encode()
     li = None
@@ -155,15 +155,17 @@ RuntimeError: dictionary changed size during iteration
 happended. since socket stacks at buffer..
 """
 
-def new_recv_forever(conn,addr, clients):
+def recv_forever(conn,addr, clients):
     while True:
         try:
-            data = conn.recv(1024)  # blocking
+            data = conn.recv(64)  # blocking
             if not data:  # client closed.
                 break
-            args = data.decode().split(',')
-            key,length = args
-            data = (key,get_data(conn, length))            
+            #args = data.decode().split(',')
+            length = int(data[:8].decode())
+            key = data[8:16].decode().strip()
+            args = data[16:].decode().split(',')
+            data = ( key, get_data(conn,length) )
             
             queue = clients.get(addr)
             if queue is None:
@@ -179,9 +181,19 @@ def new_recv_forever(conn,addr, clients):
             break
 
         #print(data, type(data), data.decode() )  # bytes
+    #print('server closed,',addr)
     #======================
     clients.pop(addr)
 
+
+connitnuous = """
+('localhost', 65432) dict_keys([('127.0.0.1', 2818)])
+invalid literal for int() with base 10: '\x00L@\x0f\x00M@\x0f'
+('localhost', 65432) dict_keys([])
+
+server closed, but buffer has old data.
+..we need flush.
+"""
 
 def get_data(conn, length, size=4096)->bytes:
     li = []
@@ -214,21 +226,22 @@ class Server:
         #HOST = 'localhost' # Standard loopback interface address (localhost) 
         #PORT = 65432 # Port to listen on (non-privileged ports are > 1023)
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((host, port))
+        self.server.bind( (host, port))  #NOTE: localhost still fastest for internal.
+        #self.server.bind((socket.gethostname(), port))  #NOTE: localhost still fastest for internal.
         self.server.listen(5)# connection waiting queue max 5.
 
+        self.addr = host,port
         self.clients = {}
         #self.queue = Queue()
 
-        self.addr = (host,port)
-
+        
     def run(self):
         t = threading.Thread(target = accept_forever, args = (self.server, self.clients) )
         t.start()
     def get(self):
-        #for key in tuple(self.clients):
-        #    queue = self.clients.get(key)
-        for addr, queue in self.clients.items():
+        #for addr, queue in self.clients.items(): during iter..
+        for addr in tuple(self.clients):
+            queue = self.clients.get(addr, Queue())
             while not queue.empty():
                 yield addr, queue.get_nowait()
 
@@ -237,7 +250,7 @@ class Server:
             print(self.addr, self.clients.keys())
             time.sleep(1)
             for i in self.get():
-                print(i)
+                print(len(i))
 
 def main():
     s = Server()
