@@ -12,7 +12,7 @@ uniform mat4 ViewProjection;
 
 void main() 
 {
-    //gl_Position = ViewProjection * Model * vec4(pos, 1);
+    gl_Position = ViewProjection * Model * vec4(pos, 1);
     gl_Position = ViewProjection * vec4(pos, 1);
     //gl_Position = vec4(pos, 1);
     out_color = color;

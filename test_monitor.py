@@ -81,6 +81,10 @@ class InputWindow(Window):
                 return
             self.inputmap.set(key,action)
         self.bind_mousebutton(mbfunc)
+
+        def mwfunc(up):
+            self.inputmap.set('mw',up)
+        self.bind_mousewheel(mwfunc)
     
     #=================================
     def _process_cursor(self):
@@ -158,6 +162,7 @@ class Window(InputWindow):
         self.camera.move( self.camera.speed * dt)
         1# for addr,data in self.view_getter.get():
         #     self.view_model.update(data)
+
         #view_model has cam info, of pos.
         #self.view_model.camera_position
         #attach to the object?? -> model gets front data, set one's front. / move->move..etc.
@@ -175,9 +180,9 @@ class Window(InputWindow):
     def draw(self):
         ViewProjection = self.camera.get_ViewProjection()
         self.renderer.clear()
-        self.renderer.render(1, ViewProjection)
-        # for table in self.view_model.get_tables():
-        #     self.renderer.render(table, ViewProjection)
+        #self.renderer.render(self.view_model, ViewProjection)
+        for table in self.view_model.get_tables():
+            self.renderer.render(table, ViewProjection)
 
 
 

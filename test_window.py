@@ -32,7 +32,7 @@ class Window(WindowInterface):
         def mbfunc(*args):
             print('mb',*args)
         self.bind_mousebutton(mbfunc)
-
+        self.bind_mousewheel(lambda x:print('wheel',x))
         #======================
         def FramebufferSizeCallback(window, width,height):
             glViewport(0, 0, width, height)
@@ -57,7 +57,10 @@ class Window(WindowInterface):
         def MouseButtonCallback(window, button, action, mods):
             mousebuttonfunc(button,action,mods)
         glfwSetMouseButtonCallback(self.window, MouseButtonCallback)
-
+    def bind_mousewheel(self, mwheelfunc):
+        def ScrollCallback(window, dnotknow, up):
+            mwheelfunc(up)
+        glfwSetScrollCallback(self.window, ScrollCallback)
     def bind_filedrop(self, dropfunc):
         def DropCallback(window, *args):
             dropfunc(*args)
@@ -136,7 +139,6 @@ class Window(WindowInterface):
 #glfwSetErrorCallback(self_callback)#instead glfwGetError()
 #glfwSetCharCallback(window, self_callback)
 #glfwSetCharModsCallback(window, self_callback)
-glfwSetScrollCallback(window, self_callback)
 
 #glfwSetWindowCloseCallback(self.window, self_callback)        
 #https://www.glfw.org/docs/3.3/group__input.html#ga1ab90a55cf3f58639b893c0f4118cb6e

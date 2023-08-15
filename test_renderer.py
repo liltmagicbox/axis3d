@@ -1,10 +1,7 @@
 from OpenGL.GL import *
-from OpenGL.GL import shaders
 import numpy as np
 
 #mesh is combi of mat, geo.
-from test_window import Window
-from vector import Camera
 
 from vao import VAO
 from shader import Shader
@@ -17,25 +14,75 @@ class Renderer:
         glClearColor(0.1,0.0,0.3, 1)
         glPointSize(5)
     
+        self.shaders = { '0': Shader() }
+        self.vaos = { '0': VAO() }
+
+    def get_shavao(self, meshid):
+        "if : generalized bsdf shader.. returns , a vao.. binds uniform,which is texture. but same vao.."
+        "ur simply use mesh- file id?? aas like ue4.. ,yeah. table is table,  each-mesh is mesh.fine."
+        "..means, yields lots-of view_table(like)..."
+        matid, geoid = meshid[:4] , meshid[4:]
+        sha = self.shaders.get(matid, self.shaders['0'])
+        vao = self.vaos.get(geoid, self.vaos['0'])
+        return sha,vao
+
     def clear(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     def render(self, view_table, view_projection ):
         #view_projection = [1,0,0,0, 0,1,0,0,  0,0,1,0, 0,0,0,1]
         #column major.
-        sha = Shader()
-        vao = VAO()
+        
+        #view_table.material
+        #view_table.geometry
 
+        meshid = view_table.get_meshid()
+        #below renderer- related.
+        sha,vao = self.get_shavao( meshid )
+        #=====================
         sha.bind()
         sha.set_mat4('ViewProjection' , view_projection)
-        vao.draw()
-        #mesh.material.set_mat4('Model',mesh.mat_Model())
+
+
+        
+        uniforms = view_table.get_uniforms()
+        #aybe this will do Model, too!
+        uniform_dict= {'Model': [],
+        'color':[1]
+        }
+
+        #point onlt not needs this..
+        #model = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]
+        model = view_table.get_Models()
+        if len(model) == 1:
+            sha.set_mat4('Model', model )
+            vao.draw()
+        else:
+            'somewhat instanced draw'
+
+        return
+
+        for name, value in view_table.get_attrs():
+            #loc = sha.get_location(name)
+            #if loc is None:
+            #    continue
+            #sha.set_vec3()
+            sha.set_uniform(name, value)
+        #set batch attrs, uniform.
+        
+        #view_table.get_models()
+        #batch Model,finally.
+        
+        #instanced draw!
+
 
 
 
 
 def main():
     import glm
+    from test_window import Window
+    from vector import Camera
 
     view_projection = [
             1.1027, 0, 0, 0,
