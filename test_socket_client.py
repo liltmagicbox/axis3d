@@ -6,8 +6,10 @@ import time
 #sock.getsockname()
 #('127.0.0.1', 6134)
 
+HEADER_LEN = 128
 
 def sendall(socket,data):
+    "length <8, 12345678,99MB. args 64-8, 56."
     #header = json.dumps( {'key':'keyname', 'length':length , 'npinfo': [(32,4),'float32'] } )
     #64, 8+8+ key-len-args.
     args,data = data
@@ -19,7 +21,7 @@ def sendall(socket,data):
     #args = str(args).ljust(48)
     #key = 'key'.rjust(8)  # f"{a:<8}"
     #args = '32,4,float32'.ljust(48)
-    header = f'{length}{args}'.ljust(64).encode()
+    header = (f'{length}{args}'[:(HEADER_LEN-8)]).ljust(HEADER_LEN).encode()
 
     try:
         socket.sendall(header)
@@ -61,22 +63,20 @@ def get_connected(address, is_udp=False):
     return sock
 
 class Client:
-    def __init__(self, port=65432, localhost = True, udp=False):
+    def __init__(self, host=None, port=65432, udp=False):
         self.udp = udp
-        if localhost:
+        if host is None:
             host = 'localhost'
-        else:
-            host = socket.gethostbyname(socket.gethostname())  # this is local ip.
         self.address = (host, port)
         self.queue = Queue()
         self.ready = threading.Event()
         self.connect()
-    def send(self, data):
+    def send(self, args,data):
         "fire & forget"
         if self.udp:
             if not self.ready.is_set():
                 return
-        self.queue.put(data)
+        self.queue.put( (args,data) )
 
     def connect(self):
         t = threading.Thread(target = sendall_forever, args = (self.address, self.queue, self.ready, self.udp) )
@@ -90,7 +90,7 @@ def main():
     while True:
         #data= str(cli.addr).encode()
         data = np.arange(5).astype('int8').tobytes()
-        cli.send( ('key,arg1',data) )
+        cli.send( 'key,arg1',data )
         time.sleep(0.001)
 
 if __name__ == '__main__':

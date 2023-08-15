@@ -3,7 +3,51 @@ import socket
 import threading
 import time
 
+HEADER_LEN = 128
 
+
+explain_socket = """
+
+소켓통신 정리.
+아무튼 편리하고 빠르다고 하고
+결론적으로 UDP도 DGRAM 인가로 되게 쉽게 되었을뿐이었다.
+TCP는 순서유지된다고하는데 , 로컬이라면 u쪽도 그러리라 보긴 함.
+
+4096 8102? 의 버퍼가 통상적 네트워크의..라고 하니 그정도로 하도록 하고
+패킷이 지나치게 크면 오히려 느리단걸 봐서인지,
+그러나 반복이 우려되긴했으나, 4키로바이트 씩 쏘니까 1000번만에도 4메가라 충분할듯함...적은가.
+뭐 아무튼 스레드에서 돌아기니 괜찮다는 식으로 넘겼습니다.
+
+큐는 기본적으로 문제없으니 사용하도록 하고
+설계구조상 사전을 쓰거나 하는건 매우 불편한 방식으로 되긴 했다. 서버측엔 쓴채 남아버렸지만 결국..
+
+웹소켓 크롬측에서 스테이트 커넥팅 커넥티드 디스커넥 이 괜히있는게 아녔다 싶어. 거의 근접했으나
+thread 에서 왠지 counter 가 바로 안 보이길래 그냥 안했습니다.
+
+서버측에선 수신되면 그걸 죄다 스레드로 넘겨서 처리한다는 식으로 돌려야하는거겠고
+
+로컬호스트가 빠르긴하고 , 겟프롬네임-겟호스트네임 식으로  써서 겨우 현재 구동중인 로컬 아이피를 얻어냈다.
+
+B''+=하면 처참히 느릴거같애서 결국 조인으로 리스트에 더하는식으로 하는건 잘 했고,
+이번엔 반복문 효과적으로 DIVMOD써서 처리했다. 정확히 받을 바이트를 받는게 핵심이라나.
+그래서 고정길이의 헤더라는 개념이 나오는데, LJUST 라는걸로 뭉치는게 되니까 매우 유용했다. 이후 스트립,스플릿으로.
+ARGS는 그냥 단일로 ,로 구분하게했고 매우 잘했다.
+
+원래 의도된것인 넘파이 데이터보내기도 가능할듯. 송수신측에서 ARGS를 처리하는법은 알고있어야겠지만.
+
+서버측에선, , 왠지, 포트가 열린 상태라면 파이썬자동종료도 되긴 ㅏ지만 명시적으로 클로즈를 해주는게 낫다고 적혀있었고
+그래야 보내는측에서도 타임아웃에 의해 에러가 발생하는게 가능했다.
+그외에 포트점유에의한 문제는 oS에러가 뜨는것이고 나머지는 파이썬에러로 납득가능한 식으로 돌아가곤 한다..
+
+SENDALL / RECV외엔 일단 안 썼으며 뭐..
+아. 버퍼같은곳에 마구 적재되므로, 1024 걸어뒀을시, 포화되면, 다음것이 자동으로 들어와버리는식으로 들어와있으므로 주의.
+OK 같은 핸드셰이크를 또 하는건 정말 아닌거같았는데, 결국 되긴 했다. 어제 2시경부터 했으니 나름 되었지뭐.
+7시간, 5시간 12시간만에 얻어낸 결과다.
+보내는측에선 버릴각오하고 보내되 특히 유디피를 애용하거나, 티씨피는 아무튼 로컬에선 별차이없다고 보며 진행했다.
+
+타임아웃에의해 어쨌든 유발되면 다행인데,   클라측에선 보냄 했을때 에러가 발생하던가 했기도 했고 뭐.
+
+"""
 
 def queueVlist():
     "list extreamly faster!"
@@ -102,7 +146,7 @@ def accept_forever(server, clients):
         clients[addr] = queue
         t = threading.Thread(target = recv_forever, args = (conn,addr, clients) )
         t.start()
-
+    server.close()
 
 def bad_recv_forever(conn,addr, clients):
     START = 'START'.encode()
@@ -158,7 +202,7 @@ happended. since socket stacks at buffer..
 def recv_forever(conn,addr, clients):
     while True:
         try:
-            data = conn.recv(64)  # blocking
+            data = conn.recv( HEADER_LEN )  # blocking
             if not data:  # client closed.
                 break
             #args = data.decode().split(',')
@@ -198,7 +242,7 @@ server closed, but buffer has old data.
 ..we need flush.
 """
 
-def get_data(conn, length, size=4096)->bytes:
+def get_data(conn, length, size=8192)->bytes:
     li = []
     times, left = divmod(length, size)
 
@@ -224,6 +268,10 @@ scn = """
 
 """
 
+
+
+
+
 class Server:
     def __init__(self, port=65432, localhost = True, udp=False):
         #HOST = 'localhost' # Standard loopback interface address (localhost) 
@@ -235,7 +283,7 @@ class Server:
         if localhost:
             host = 'localhost'
         else:
-            host = socket.gethostbyname(socket.gethostname())
+            host = socket.gethostbyname(socket.gethostname())  # this is local ip.
         self.server.bind( (host, port))  #NOTE: localhost still fastest for internal.
         #self.server.bind((socket.gethostname(), port))  #NOTE: localhost still fastest for internal.
         self.server.listen(5)# connection waiting queue max 5.
@@ -253,8 +301,8 @@ class Server:
         for addr in tuple(self.clients):
             queue = self.clients.get(addr, Queue())
             while not queue.empty():
-                yield queue.get_nowait()
-                #yield addr, queue.get_nowait()
+                #yield queue.get_nowait()
+                yield addr, queue.get_nowait()
 
     def look(self):
         while True:
