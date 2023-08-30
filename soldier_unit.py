@@ -67,6 +67,11 @@ class Unit:
 		ddata = {k:v for k,v in zip(attr_names,array) }
 		unit._update(ddata)
 		return unit
+	@classmethod
+	def from_dict(cls,attr_dict):
+		unit = cls()
+		unit._update(attr_dict)
+		return unit
 	@property
 	def attrs(self):
 		return self._data
@@ -78,7 +83,7 @@ def test_unit():
 
 	u = Unit.from_array(['a','b','pos'], [1,2,3])
 	print(u.a,u.b,u.pos)
-
+	u2 = Unit.from_dict( {'a':1,'b':2,'pos':3})
 
 class Units_Interface(ABC):
 	@abstractmethod
@@ -173,7 +178,7 @@ class UnitArray:
 		self._defaults = default_attrs
 
 		#===set idxmap
-		idx_map = {'id':slice(0,1)}
+		idx_map = {'uid':slice(0,1)}
 		begin = 1
 		for key,value in default_attrs.items():
 			try:
@@ -251,8 +256,8 @@ class UnitArray:
 		new_ids = [i for i in range(new_id , new_id+n)]
 
 		self._id_map.update( { id:idx for id,idx in zip(new_ids,fresh_idxs)} )
-		self._fresh_idx = self._fresh_idx[:-n]
 		self._unit_counter += n
+		self._fresh_idx = self._fresh_idx[:-n]
 		return new_ids, fresh_idxs
 
 
@@ -262,7 +267,7 @@ class UnitArray:
 		#self._units[unit.id] = unit
 		new_id,idx = self._get_fresh_id_idx()
 		
-		self._arr[ self._idx('id') ,idx] = new_id
+		self._arr[ self._idx('uid') ,idx] = new_id
 		for key,value in self.attrs.items():
 			value = kwargs[key] if key in kwargs else value
 			self._arr[ self._idx(key) ,idx] = value
@@ -279,7 +284,7 @@ class UnitArray:
 		new_ids,fresh_idxs = self._get_fresh_id_idxs(n)
 
 		#set id
-		self._arr[ self._idx('id') , fresh_idxs ] = new_ids
+		self._arr[ self._idx('uid') , fresh_idxs ] = new_ids
 
 		#set other attrs
 		for key,value in self.attrs.items():
