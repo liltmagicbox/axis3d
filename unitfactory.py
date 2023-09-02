@@ -100,31 +100,34 @@ class Unit:
 
 class UnitFactory:
 	def __init__(self):
-		self.data[name] = {}
-		self.behavior[name] = {}
-		self.units[name] = {}
-	
+		self.data = {}
+		self.behavior = {}
+		self.units = {}
+		self.unit = {}
 	def set(self, name, data, behavior=None, array = True):
 		self.data[name] = data
 		self.behavior[name] = behavior
 		if array:
-			self.units[name] = UnitArray(data)
+			ua = UnitArray(data)
 		else:
-			self.units[name] = UnitDict(data)
-
-	def order(self, name, n=1, whole=False):
+			ua = UnitDict(data)
+		self.units[name] = ua
+		self.unit[name] = Unit(ua, behavior)
+		#--
+	def order(self, name, n=1, whole=False, **kwargs):
 		if whole:
 			ua = UnitArray( self.data[name] , n)
+			idxs = ua.acquire(n, **kwargs)#to activate.
 			return Unit(ua, behavior = self.behavior[name])  #update itself!
 		ua = self.units[name]
 		idxs = ua.acquire(n, **kwargs)
 		return Unit(ua,idxs)
 
 	def update(self,dt):
-		for name, be in self.behavior.items():
+		for name, behavior in self.behavior.items():
+			unit = self.unit[name]
 			for func in be:
-				units = self.units[name]
-				units.execute(func,dt)
+				unit.execute(func,dt)
 
 
 

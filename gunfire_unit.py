@@ -181,7 +181,7 @@ class UnitArray:
 			return get_arr(self.data[key][i], idxs)
 	#-----
 	#if self.fixed
-	def get_active_idxs(self):
+	def get_active(self):
 		"1M, 2.5ms"
 		return make_idxs(self.active)
 	#-----
