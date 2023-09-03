@@ -69,13 +69,56 @@ class UnitDict:
 
 
 #===================================
-#attrs?
+
+
+#behavior -> ratefire module.
+#timer
+#timer -> after 5s, register something. , timer is done if over, but if threshold is reset..
+#...behavial timer??
+
+class Timer:
+	def __init__(self):
+		self.time = 0
+		self.timeline = {}
+	def update(self,dt):
+		self.time += dt
+		current_time = self.time
+		for i in self.timeline:
+			if current_time >= i:
+				action = self.timeline[i]
+				yield action
+			else:
+				break
+	def set(self, time_after,action):
+		"has internal timer."
+		future_time = self.time + time_after
+		self.timeline[future_time] = action
+
+
+
+class Behavior:
+	def __init__(self):
+		self.counter = 0
+	def update(self, unit,dt):
+		for action in self.timer.update(dt):
+			action()
+
+def action(unit):
+	unit.behavior.set_timer(3.5, unit.destroy )
+
+
+
+
+
 class Unit:
 	def __init__(self, unit_array, idxs=None, behavior=None ):
+		if behavior is None: behavior = Behavior()
 		object.__setattr__(self, '_data', unit_array)
 		object.__setattr__(self, '_idxs', idxs)
 		object.__setattr__(self, 'behavior', behavior)
 		object.__setattr__(self, 'attrs', tuple(unit_array.default.keys()) )
+	def __repr__(self):
+		return f"Unit: {len(self._idxs)} {self.attrs}"
 	def __setattr__(self, key,value):
 		self._data.set(key,value, self._idxs)
 	def __getattr__(self, key):
@@ -94,9 +137,10 @@ class Unit:
 	def execute(self, function, *args, **kwargs):
 		function(self, *args, **kwargs)
 	def update(self,dt):
-		if self.behavior is None:return
-		for func in self.behavior:
-			self.execute(func,dt)
+		self.behavior.update(self,dt)
+
+
+
 
 class UnitFactory:
 	def __init__(self):
@@ -126,14 +170,16 @@ class UnitFactory:
 	def update(self,dt):
 		for name, behavior in self.behavior.items():
 			unit = self.unit[name]
-			for func in be:
-				unit.execute(func,dt)
+			behavior.update(unit, dt)
 
 
 
-
-
-
+uf = UnitFactory()
+uf.set('hamster', {'jump':1,'age':3})
+x = uf.order('hamster')
+print(x)
+x = uf.order('hamster', jump=2)
+print(x.jump)
 
 #========================================
 def minitest():
