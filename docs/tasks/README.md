@@ -11,7 +11,7 @@ synced over LAN, exported to glTF**, with the document system proven on real car
 | id | title | role | model | pack | blocked_by | status |
 |---|---|---|---|---|---|---|
 | 0001 | Bootstrap project skeleton and doc tools | implementer | — | implement | — | done |
-| 0002 | conventions.py and linalg (quaternion, transform, projection) | implementer | medium | implement | 0001 | todo |
+| 0002 | conventions.py and linalg (quaternion, transform, projection) | implementer | medium | implement | 0001 | in-progress |
 | 0003 | ecs/table.py: SoA Table with ids and row_of | implementer | small | implement | 0002 | todo |
 | 0004 | ecs: World, schedule, join | implementer | small | implement | 0003 | todo |
 | 0005 | layout/struct.py: Struct → dtype + GLSL (HARD ZONE) | implementer | medium | implement | 0002 | todo |
