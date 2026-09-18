@@ -5,7 +5,7 @@ title: Move legacy root experiments to legacy/
 pack: record
 role: scribe
 model: small
-status: needs-human
+status: done
 blocked_by: []
 brief_ko: 저장소 루트의 옛 실험 파일들을 legacy/ 로 옮기는 카드. 사람 승인 전에는 실행하지 않는다.
 ---
@@ -34,3 +34,8 @@ The repository root shows only the new engine; the earlier experiments stay avai
 
 ## Out of scope
 - Rewriting or deleting anything in the moved files.
+
+## Outcome
+Done 2026-09-18 after the user confirmed A-002. `git mv` of 25 files and 2 folders into `legacy/`, `legacy/README.md`
+maps each prototype to the engine idea it became. `AGENTS.md`, `README.md`, ADR 0001 now point at `legacy/`.
+ruff, pytest, check_docs green.

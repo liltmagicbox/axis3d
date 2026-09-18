@@ -14,7 +14,7 @@ a beginner can follow the main path, and the hard parts are fenced off as `HARD 
 Nothing else unless the card says so. Small context is the point.
 
 ## Commands
-- `uv sync` · `uv run pytest -q` (CPU only) · `AXIS3D_GPU=1 uv run pytest -q -m gpu` (needs a GL 4.6 display)
+- `uv sync` · `uv run pytest -q` (CPU only) · `AXIS3D_GPU=1 uv run pytest -q -m gpu` (GL 4.6 display, or headless: `docs/variants/gl46.md`)
 - `uv run ruff check . && uv run ruff format .`
 - `uv run python tools/check_docs.py` — doc budgets, frontmatter, links
 - `uv run python tools/pack.py docs/packs/implement.md --task docs/tasks/todo/0003-ecs-table.md --stats`
@@ -30,4 +30,4 @@ Nothing else unless the card says so. Small context is the point.
 
 ## Layout
 `src/axis3d/` engine · `tests/` pytest mirror of src · `bench/` benchmarks · `docs/` this system · `tools/` doc utilities
-Files at the repository root (`axis.py`, `*_unit.py`, `test_*.py`, …) are earlier experiments; do not edit or import them.
+`legacy/` holds the earlier experiments (see `legacy/README.md`); do not edit or import them.

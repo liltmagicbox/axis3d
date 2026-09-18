@@ -29,7 +29,7 @@ synced over LAN, exported to glTF**, with the document system proven on real car
 | 0017 | bench: harness and first numbers | profiler | medium | perf | 0014, 0011 | todo |
 | 0018 | edge hunt: Table and snapshot | edge_hunter | medium | edge | 0006 | todo |
 | 0019 | tour: core path | teacher | medium | teach | 0007 | todo |
-| 0020 | Move legacy root experiments to legacy/ | scribe | small | record | — | needs-human |
+| 0020 | Move legacy root experiments to legacy/ | scribe | small | record | — | done |
 | 0021 | gpu/gles31 backend (mini engine) | porter | medium | port_gles31 | 0012 | blocked |
 | 0022 | tests: ECS behaviours as examples | tester | small | test | 0004 | todo |
 

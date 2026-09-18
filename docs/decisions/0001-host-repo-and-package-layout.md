@@ -16,8 +16,8 @@ Two repositories were in scope (`axis3d`, `new3dkatsu`). Where does the new engi
 
 ## Decision
 - Repository `axis3d`, package `src/axis3d/`, tests in `tests/`, benchmarks in `bench/`, documents in `docs/`.
-- The Python files at the repository root (`axis.py`, `*_unit.py`, `test_*.py`, `vector.py`, …) are earlier
-  experiments. They are excluded from ruff and pytest (`pyproject.toml`) and are neither edited nor imported.
+- The Python files that were at the repository root (`axis.py`, `*_unit.py`, `test_*.py`, `vector.py`, …) are earlier
+  experiments; task 0020 moved them to `legacy/` (user-approved). They are excluded from ruff and pytest and never imported.
 - `new3dkatsu` receives nothing. Its ideas (own matrix code, procedural rings/floors, Unit/Transform/Visual) are
   referenced in `docs/records/` where useful.
 

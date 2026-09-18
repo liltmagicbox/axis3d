@@ -5,7 +5,7 @@ and a document system that lets small AI models build, test, review and record i
 
 - Start here: `AGENTS.md` (entry) → `docs/README.md` (map of the document system).
 - Run: `uv sync` · `uv run pytest -q` · `uv run python tools/check_docs.py`
-- The engine code lives in `src/axis3d/`; the files at the repository root are earlier experiments.
+- The engine code lives in `src/axis3d/`; `legacy/` holds the earlier experiments it grew out of.
 
 ## 한국어
 파이썬 3D 시뮬레이션 엔진(axis3d)과, 작은 AI 모델들이 역할별(구현·테스트·규칙검사·성능·기록…)로
