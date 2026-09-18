@@ -17,7 +17,7 @@ synced over LAN, exported to glTF**, with the document system proven on real car
 | 0005 | layout/struct.py: Struct → dtype + GLSL (HARD ZONE) | implementer | medium | implement | 0002 | todo |
 | 0006 | io/snapshot.py: snapshot, restore, schema_hash | implementer | medium | implement | 0004 | todo |
 | 0007 | sim: integrate, bounds, expire | implementer | small | implement | 0004 | todo |
-| 0008 | gpu: Device interface and gl46 buffers/textures | implementer | medium | implement_gpu | 0005 | todo |
+| 0008 | gpu: Device interface and gl46 buffers/textures | implementer | medium | implement_gpu | 0001 | in-progress |
 | 0009 | gpu: gl46 pipelines, passes, frame ring, preprocess | implementer | medium | implement_gpu | 0008 | todo |
 | 0010 | app: Window, Input, bindings, loop | implementer | medium | implement_gpu | 0004 | todo |
 | 0011 | render: Meshes, primitives, gather | implementer | medium | implement | 0005, 0007 | todo |

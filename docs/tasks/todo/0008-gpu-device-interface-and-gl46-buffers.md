@@ -6,7 +6,7 @@ pack: implement_gpu
 role: implementer
 model: medium
 status: todo
-blocked_by: [0005]
+blocked_by: [0001]
 brief_ko: Device 프로토콜·PipelineState·핸들·Unsupported 정의와, gl46 백엔드의 버퍼(static/stream 링/readback)·텍스처·create_device.
 ---
 # 0008 — gpu: Device interface and gl46 buffers

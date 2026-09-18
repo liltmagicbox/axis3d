@@ -38,3 +38,4 @@ A rejected row is never deleted; it gets a status and a pointer.
 | A-027 | 2026-09-18 | ADR 0016 | Spheres-only collision is an acceptable v1 (AABB, capsule later). | Ask the user. | open |
 | A-028 | 2026-09-18 | spec/network | TCP before UDP, threads before asyncio, mirrors the user's working prototype. | Task 0015. | open |
 | A-029 | 2026-09-18 | sprint | "계속 진행" means: run the first sprint with sub-models by role (implementer → reviewer → scribe), committing one card per commit on the designated branch instead of `task/NNNN` branches (git rule V3), because the user's branch instruction takes precedence. | User reads `docs/tasks/done/` outcomes. | open |
+| A-030 | 2026-09-18 | board | Card 0008 does not depend on 0005 (the device interface uses no Struct); its `blocked_by` was corrected to 0001 so GPU work can start in parallel with the core cards. | Card 0008 report. | open |
