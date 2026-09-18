@@ -18,3 +18,13 @@ table.py
 table_big.py
 __pycache__/axis.cpython-310.pyc
 *.pyc
+
+# axis3d (new engine)
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+src/axis3d/render/shaders/gen/

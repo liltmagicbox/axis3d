@@ -1,0 +1,39 @@
+[project]
+name = "axis3d"
+version = "0.0.1"
+description = "A data-oriented 3D simulation engine in Python (numpy + OpenGL 4.6), written to be read."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+dependencies = [
+    "numpy>=2.0",
+    "PyOpenGL>=3.1.7",
+    "glfw>=2.7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/axis3d"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["gpu: needs an OpenGL 4.6 context; run with AXIS3D_GPU=1"]
+
+[tool.ruff]
+# Only the new engine is linted. Legacy experiments at the repo root are left as they are.
+include = ["src/**/*.py", "tests/**/*.py", "tools/**/*.py", "bench/**/*.py", "pyproject.toml"]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+ignore = ["E501"]  # ruff format owns line length
